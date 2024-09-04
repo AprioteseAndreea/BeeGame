@@ -1,0 +1,63 @@
+html {
+    background-image: url('../assets/honeycomb-pattern.jpg');
+    background-size: 350px 350px;
+    background-color: #f6ae2d;
+}
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+   
+}
+
+#start-screen {
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+#bee-image {
+    width: 100px;
+    height: auto;
+}
+h1 {
+    font-size: 2em;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+#player-name {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+    box-sizing: border-box;
+}
+
+#start-game {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.2em;
+    background-color: #f6ae2d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#start-game:hover {
+    background-color: #f8a203;
+}
+
+

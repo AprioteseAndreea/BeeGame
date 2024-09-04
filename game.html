@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bee Game</title>
+    <link rel="stylesheet" href="styles/styles.css" />
+    <link rel="stylesheet" href="styles/game.css" />
+  </head>
+  <body>
+    <div class="background">
+      <div class="card">
+        <div class="header">
+          <div class="statistics-item">
+            <b>Alive Bees:</b>
+            <div id="alive-bees-count"></div>
+            <b>Swarm health</b>
+            <div id="swarm-health-count"></div>
+            <div id="swarm-health-bar-container"></div>
+          </div>
+          <div class="statistics-container">
+            <div class="statistics-item">
+              <b>Queens</b>
+              <img
+                src="assets/queen-bee.png"
+                alt="Worker Bee 4"
+                class="bee-image"
+              />
+              <div id="queen-bee-counter"></div>
+            </div>
+            <div class="statistics-item">
+              <b>Workers</b>
+              <img
+                src="assets/worker-bee.png"
+                alt="Worker Bee 4"
+                class="bee-image"
+              />
+              <div id="worker-bee-counter"></div>
+            </div>
+            <div class="statistics-item">
+              <b>Drones</b>
+              <img
+                src="assets/drone-bee.png"
+                alt="Worker Bee 4"
+                class="bee-image"
+              />
+              <div id="drone-bee-counter"></div>
+            </div>
+          </div>
+          <div>
+            <b>Player: </b>
+            <div id="player-name-display"></div>
+          </div>
+        </div>
+        <div class="content">
+          <div id="bee-container" class="bee-container"></div>
+        </div>
+        <div class="footer">
+          <button id="reset-game" class="reset-game">Reset game</button>
+          <button id="hit-button" class="hit-button">Hit</button>
+        </div>
+        <div id="hit-info"></div>
+        <div id="game-over" style="display: none">
+          <h2>Game Over</h2>
+          <button id="restart-game" class="restart-game">Restart Game</button>
+        </div>
+      </div>
+    </div>
+    <script src="scripts/game.js" type="module"></script>
+  </body>
+</html>
