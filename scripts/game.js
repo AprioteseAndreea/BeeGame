@@ -1,40 +1,5 @@
-import { QueenBee, WorkerBee, DroneBee } from "../classes/models.js";
-import {
-  QUEEN_COUNT,
-  WORKER_COUNT,
-  DRONE_COUNT,
-  QUEEN_HEALTH,
-  WORKER_HEALTH,
-  DRONE_HEALTH,
-} from "../config.js";
-
-class BeeSwarm {
-  constructor() {
-    this.queen = new QueenBee();
-    this.workers = Array.from({ length: WORKER_COUNT }, () => new WorkerBee());
-    this.drones = Array.from({ length: DRONE_COUNT }, () => new DroneBee());
-  }
-
-  getAllBees() {
-    return [this.queen, ...this.workers, ...this.drones];
-  }
-
-  getAliveBees() {
-    return this.getAllBees().filter((bee) => bee.isAlive());
-  }
-
-  hitRandomBee() {
-    const aliveBees = this.getAliveBees();
-    const randomIndex = Math.floor(Math.random() * aliveBees.length);
-    const hitBee = aliveBees[randomIndex];
-    hitBee.hit();
-    return hitBee;
-  }
-
-  isGameOver() {
-    return !this.queen.isAlive() || this.getAliveBees().length === 0;
-  }
-}
+import { TOTAL_HEALTH, BEE_TYPES, GAME_SETTINGS } from "../config.js";
+import { BeeSwarm } from "../classes/models.js";
 
 class BeeGame {
   constructor() {
@@ -42,6 +7,42 @@ class BeeGame {
     this.playerName = "";
 
     this.restoreState();
+    this.initializeStatistics();
+  }
+
+  get totalHealth() {
+    return TOTAL_HEALTH;
+  }
+
+  get beesCounter() {
+    return this.swarm.bees.length;
+  }
+
+  get currentSwarmHealth() {
+    return this.swarm.bees.reduce((sum, bee) => sum + bee.healthPoints, 0);
+  }
+
+  initializeStatistics() {
+    const container = document.querySelector(".statistics-container");
+    container.innerHTML = "";
+
+    BEE_TYPES.forEach((beeType) => {
+      const item = document.createElement("div");
+      item.className = "statistics-item";
+      item.innerHTML = `
+        <b>${beeType.type.replace("Bee", "s")}</b>
+        <img
+          src="${beeType.imagePath}"
+          alt="${beeType.type} Image"
+          class="bee-image"
+        />
+        <div id="${beeType.type.toLowerCase()}-bee-counter"></div>
+      `;
+
+      container.appendChild(item);
+    });
+
+    this.updateBeeCounters();
   }
 
   restoreState() {
@@ -50,13 +51,10 @@ class BeeGame {
 
     if (latestState) {
       this.playerName = latestState.playerName;
-
-      this.swarm.queen.healthPoints = latestState.queen;
-      this.swarm.workers.forEach((worker, index) => {
-        worker.healthPoints = latestState.workers[index] || WORKER_HEALTH;
-      });
-      this.swarm.drones.forEach((drone, index) => {
-        drone.healthPoints = latestState.drones[index] || DRONE_HEALTH;
+      this.swarm.bees.forEach((bee, index) => {
+        if (latestState.bees[index] !== undefined) {
+          bee.healthPoints = latestState.bees[index];
+        }
       });
     }
   }
@@ -73,12 +71,14 @@ class BeeGame {
   hit() {
     const hitBee = this.swarm.hitRandomBee();
 
-    this.updateHitInfo(hitBee);
-    this.updateUI();
-    this.saveState();
+    if (hitBee) {
+      this.updateHitInfo(hitBee);
+      this.updateUI();
+      this.saveState();
 
-    if (this.swarm.isGameOver()) {
-      this.endGame();
+      if (this.swarm.isGameOver()) {
+        this.endGame();
+      }
     }
   }
 
@@ -88,156 +88,120 @@ class BeeGame {
   }
 
   updateUI() {
-    const playerName = localStorage.getItem("playerName");
+    this.updateBeeCounters();
+    this.updateSwarmHealth();
+    this.updateBeeDisplay();
+  }
 
-    const playerNameDisplay = document.getElementById("player-name-display");
+  updateBeeCounters() {
     const aliveBeesCount = document.getElementById("alive-bees-count");
+    aliveBeesCount.innerText = `${this.swarm.getAliveBees().length} / ${
+      this.beesCounter
+    }`;
+
+    BEE_TYPES.forEach((beeType) => {
+      const count = this.swarm.bees.filter(
+        (bee) => bee.type === beeType.type && bee.isAlive()
+      ).length;
+
+      const counterElement = document.getElementById(
+        `${beeType.type.toLowerCase()}-bee-counter`
+      );
+      if (counterElement) {
+        counterElement.innerText = `${count} / ${beeType.count}`;
+      }
+    });
+  }
+
+  updateSwarmHealth() {
+    const currentHealth = this.currentSwarmHealth;
     const swarmHealthCount = document.getElementById("swarm-health-count");
-    const queenBeeCounter = document.getElementById("queen-bee-counter");
-    const workerBeeCounter = document.getElementById("worker-bee-counter");
-    const droneBeeCounter = document.getElementById("drone-bee-counter");
-    const beeContainer = document.getElementById("bee-container");
 
-    const beesCounter = QUEEN_COUNT + WORKER_COUNT + DRONE_COUNT;
+    swarmHealthCount.innerText = `${currentHealth} / ${this.totalHealth}`;
+    this.updateSwarmHealthBar(currentHealth, this.totalHealth);
+  }
 
-    playerNameDisplay.innerText = `${playerName}`;
-    aliveBeesCount.innerText = `${
-      this.swarm.getAliveBees().length
-    } / ${beesCounter}`;
-
-    const totalHealth =
-      QUEEN_COUNT * QUEEN_HEALTH +
-      WORKER_COUNT * WORKER_HEALTH +
-      DRONE_COUNT * DRONE_HEALTH;
-    const currentHealth =
-      this.swarm.queen.healthPoints +
-      this.swarm.workers.reduce((sum, worker) => sum + worker.healthPoints, 0) +
-      this.swarm.drones.reduce((sum, drone) => sum + drone.healthPoints, 0);
-
-    swarmHealthCount.innerText = `${currentHealth} / ${totalHealth}`;
-
+  updateSwarmHealthBar(currentHealth, totalHealth) {
     const swarmHealthPercentage = (currentHealth / totalHealth) * 100;
-    let swarmHealthColor;
+    const swarmHealthColor = this.getHealthColor(swarmHealthPercentage);
 
-    if (swarmHealthPercentage > 50) {
-      swarmHealthColor = "green";
-    } else if (swarmHealthPercentage > 20) {
-      swarmHealthColor = "yellow";
-    } else {
-      swarmHealthColor = "red";
+    let healthBarContainer = document.getElementById(
+      "swarm-health-bar-container"
+    );
+    if (!healthBarContainer) {
+      healthBarContainer = document.createElement("div");
+      healthBarContainer.id = "swarm-health-bar-container";
+      document.getElementById("header").appendChild(healthBarContainer);
     }
 
-    const swarmHealthBar = `
-        <div class="swarm-health-bar-container">
-            <div class="swarm-health-bar" style="background-color: ${swarmHealthColor}; width: ${swarmHealthPercentage}%;"></div>
-        </div>
+    healthBarContainer.innerHTML = `
+      <div class="swarm-health-bar-container">
+          <div class="swarm-health-bar" style="background-color: ${swarmHealthColor}; width: ${swarmHealthPercentage}%;"></div>
+      </div>
     `;
+  }
 
-    if (document.getElementById("swarm-health-bar-container")) {
-      document.getElementById("swarm-health-bar-container").innerHTML =
-        swarmHealthBar;
-    } else {
-      const swarmHealthContainer = document.createElement("div");
-      swarmHealthContainer.id = "swarm-health-bar-container";
-      swarmHealthContainer.innerHTML = swarmHealthBar;
-      document.getElementById("header").appendChild(swarmHealthContainer);
-    }
+  getHealthColor(percentage) {
+    if (percentage > 50) return "green";
+    if (percentage > 20) return "yellow";
+    return "red";
+  }
 
-    queenBeeCounter.innerText = `${
-      this.swarm.queen.isAlive() ? 1 : 0
-    } / ${QUEEN_COUNT}`;
-    workerBeeCounter.innerText = `${
-      this.swarm.workers.filter((worker) => worker.isAlive()).length
-    } / ${WORKER_COUNT}`;
-    droneBeeCounter.innerText = `${
-      this.swarm.drones.filter((drone) => drone.isAlive()).length
-    } / ${DRONE_COUNT}`;
-
+  updateBeeDisplay() {
+    const beeContainer = document.getElementById("bee-container");
     beeContainer.innerHTML = "";
 
-    const createHealthBar = (healthPoints, maxHealth) => {
-      const healthPercentage = (healthPoints / maxHealth) * 100;
-      let healthColor;
-
-      if (healthPercentage > 50) {
-        healthColor = "green";
-      } else if (healthPercentage > 20) {
-        healthColor = "yellow";
-      } else {
-        healthColor = "red";
+    this.swarm.bees.forEach((bee, index) => {
+      const beeType = BEE_TYPES.find((type) => type.type === bee.type);
+      if (beeType) {
+        this.createBeeCard(
+          beeType.imagePath,
+          `${bee.type} Bee ${index + 1}`,
+          bee.healthPoints,
+          beeType.health,
+          beeContainer
+        );
       }
+    });
+  }
 
-      return `
-            <div class="health-bar-container">
-                <div class="swarm-health-bar" style="background-color: ${healthColor}; width: ${healthPercentage}%;"></div>
-            </div>
-            <p>${healthPoints} HP</p>
-        `;
-    };
+  createBeeCard(imageSrc, altText, healthPoints, maxHealth, container) {
+    const healthBar = this.createHealthBar(healthPoints, maxHealth);
+    const beeCard = document.createElement("div");
+    beeCard.className = "bee-card";
+    beeCard.innerHTML = `<img src="assets/${imageSrc}" alt="${altText}" class="bee-image"> ${healthBar}`;
+    container.appendChild(beeCard);
+  }
 
-    const queenHealthBar = createHealthBar(
-      this.swarm.queen.healthPoints,
-      QUEEN_HEALTH
-    );
-    const queenContainer = document.createElement("div");
-    queenContainer.className = "bee-card";
-    queenContainer.innerHTML = `
-        <img src="assets/queen-bee.png" alt="Queen Bee" class="bee-image">
-        ${queenHealthBar}
+  createHealthBar(healthPoints, maxHealth) {
+    const healthPercentage = (healthPoints / maxHealth) * 100;
+    const healthColor = this.getHealthColor(healthPercentage);
+
+    return `
+      <div class="health-bar-container">
+          <div class="swarm-health-bar" style="background-color: ${healthColor}; width: ${healthPercentage}%;"></div>
+      </div>
+      <p>${healthPoints} HP</p>
     `;
-    beeContainer.appendChild(queenContainer);
-
-    this.swarm.workers.forEach((worker, index) => {
-      const workerHealthBar = createHealthBar(
-        worker.healthPoints,
-        WORKER_HEALTH
-      );
-      const workerContainer = document.createElement("div");
-      workerContainer.className = "bee-card";
-      workerContainer.innerHTML = `
-            <img src="assets/worker-bee.png" alt="Worker Bee ${
-              index + 1
-            }" class="bee-image">
-            ${workerHealthBar}
-        `;
-      beeContainer.appendChild(workerContainer);
-    });
-
-    this.swarm.drones.forEach((drone, index) => {
-      const droneHealthBar = createHealthBar(drone.healthPoints, DRONE_HEALTH);
-      const droneContainer = document.createElement("div");
-      droneContainer.className = "bee-card";
-      droneContainer.innerHTML = `
-            <img src="assets/drone-bee.png" alt="Drone Bee ${
-              index + 1
-            }" class="bee-image">
-            ${droneHealthBar}
-        `;
-      beeContainer.appendChild(droneContainer);
-    });
   }
 
   endGame() {
     document.getElementById("game-over").style.display = "block";
-    localStorage.removeItem("beeGameState");
-
+    localStorage.removeItem("beeGameStates");
     document.getElementById("hit-button").disabled = true;
   }
 
   saveState() {
     const savedStates = JSON.parse(localStorage.getItem("beeGameStates")) || [];
-
     const state = {
       playerName: this.playerName,
-      queen: this.swarm.queen.healthPoints,
-      workers: this.swarm.workers.map((worker) => worker.healthPoints),
-      drones: this.swarm.drones.map((drone) => drone.healthPoints),
+      bees: this.swarm.bees.map((bee) => bee.healthPoints),
       timestamp: new Date().toISOString(),
     };
 
     savedStates.push(state);
 
-    if (savedStates.length > 100) {
+    if (savedStates.length > GAME_SETTINGS.maxSavedStates) {
       savedStates.shift();
     }
 
@@ -251,43 +215,20 @@ document.getElementById("hit-button").addEventListener("click", () => {
   game.hit();
 });
 
-document.getElementById("restart-game").addEventListener("click", () => {
-  game.startGame(localStorage.getItem("playerName"));
-
-  const gameOverText = document.getElementById("game-over");
-  if (gameOverText) {
-    gameOverText.style.display = "none";
-  }
-
-  const hitButton = document.getElementById("hit-button");
-  if (hitButton) {
-    hitButton.disabled = false;
-  }
-});
-
 document.addEventListener("DOMContentLoaded", () => {
   const playerName = localStorage.getItem("playerName");
   if (playerName) {
-    console.log("Player name found in localStorage:", playerName);
     document.getElementById("player-name-display").innerText = `${playerName}`;
     game.updateUI();
   } else {
-    console.log("No player name found in localStorage");
     window.location.href = "index.html";
   }
 });
+
 document.getElementById("reset-game").addEventListener("click", () => {
   localStorage.removeItem("beeGameStates");
-
   game.startGame(localStorage.getItem("playerName"));
 
-  const gameOverText = document.getElementById("game-over");
-  if (gameOverText) {
-    gameOverText.style.display = "none";
-  }
-
-  const hitButton = document.getElementById("hit-button");
-  if (hitButton) {
-    hitButton.disabled = false;
-  }
+  document.getElementById("game-over").style.display = "none";
+  document.getElementById("hit-button").disabled = false;
 });

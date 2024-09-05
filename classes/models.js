@@ -1,37 +1,54 @@
-import { QUEEN_HEALTH, QUEEN_DAMAGE, WORKER_HEALTH, WORKER_DAMAGE, DRONE_HEALTH, DRONE_DAMAGE } from '../config.js';
+import { BEE_TYPES } from "../config.js";
 
 export class Bee {
-    constructor(type, healthPoints, damage) {
-        this.type = type;
-        this.healthPoints = healthPoints;
-        this.damage = damage;
-    }
+  constructor(type, healthPoints, damage, imagePath) {
+    this.type = type;
+    this.healthPoints = healthPoints;
+    this.damage = damage;
+    this.imagePath = imagePath
+  }
 
-    hit() {
-        this.healthPoints -= this.damage;
-        if (this.healthPoints < 0) this.healthPoints = 0;
-        return this.healthPoints;
-    }
+  hit() {
+    this.healthPoints -= this.damage;
+    if (this.healthPoints < 0) this.healthPoints = 0;
+    return this.healthPoints;
+  }
 
-    isAlive() {
-        return this.healthPoints > 0;
-    }
+  isAlive() {
+    return this.healthPoints > 0;
+  }
 }
 
-export class QueenBee extends Bee {
-    constructor() {
-        super('Queen', QUEEN_HEALTH, QUEEN_DAMAGE);
-    }
-}
+export class BeeSwarm {
+  constructor() {
+    this.bees = [];
 
-export class WorkerBee extends Bee {
-    constructor() {
-        super('Worker', WORKER_HEALTH, WORKER_DAMAGE);
-    }
-}
+    BEE_TYPES.forEach(beeType => {
+      for (let i = 0; i < beeType.count; i++) {
+        this.bees.push(new Bee(beeType.type, beeType.health, beeType.damage, beeType.imagePath));
+      }
+    });
+  }
 
-export class DroneBee extends Bee {
-    constructor() {
-        super('Drone', DRONE_HEALTH, DRONE_DAMAGE);
+  hitRandomBee() {
+    const aliveBees = this.getAliveBees();
+    if (aliveBees.length > 0) {
+      const randomIndex = Math.floor(Math.random() * aliveBees.length);
+      const hitBee = aliveBees[randomIndex];
+      hitBee.hit(Math.floor(Math.random() * hitBee.damage));
+      return hitBee;
     }
+    return null;
+  }
+
+  getAliveBees() {
+    return this.bees.filter((bee) => bee.isAlive());
+  }
+
+  isGameOver() {
+    const queenBee = this.bees.find(bee => bee.type === 'QueenBee');
+    const isQueenAlive = queenBee ? queenBee.isAlive() : true;
+    
+    return this.bees.every((bee) => !bee.isAlive()) || !isQueenAlive;
+  }
 }

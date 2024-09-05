@@ -1,4 +1,4 @@
-.card {
+.game-card {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -8,7 +8,7 @@
   text-align: center;
 }
 
-.header {
+.game-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -27,11 +27,11 @@
   gap: 5px;
 }
 
-.header span {
+.game-header span {
   font-size: 14px;
 }
 
-.content {
+.game-content {
   margin-bottom: 20px;
   text-align: left;
 }
@@ -55,7 +55,7 @@
   margin-bottom: 5px;
 }
 
-.footer {
+.game-footer {
   margin-top: 20px;
   display: flex;
   justify-content: space-between;
@@ -81,6 +81,24 @@ button {
 
 button:hover {
   background-color: #45a049;
+}
+.hit-button {
+  background-image: url('../assets/worker-bee.png');
+  background-size: 30px 30px;
+  background-repeat: no-repeat;
+  background-position: right center;
+  padding-left: 10px;
+  padding-right: 30px;
+  font-size: 16px;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: transform 0.1s ease; 
+
+}
+
+.hit-button:active {
+  transform: scale(0.95);
 }
 
 #hit-info {
