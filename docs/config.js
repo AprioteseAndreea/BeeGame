@@ -10,9 +10,9 @@ export const QUEEN_DAMAGE = 20;
 export const WORKER_DAMAGE = 10;
 export const DRONE_DAMAGE = 15;
 
-export const QUEEN_IMAGE_PATH = "../assets/queen-bee.png";
-export const WORKER_IMAGE_PATH = "../assets/worker-bee.png";
-export const DRONE_IMAGE_PATH = "../assets/drone-bee.png";
+export const QUEEN_IMAGE_PATH = "assets/queen-bee.png";
+export const WORKER_IMAGE_PATH = "assets/worker-bee.png";
+export const DRONE_IMAGE_PATH = "assets/drone-bee.png";
 
 export const BEE_TYPES = [
   {

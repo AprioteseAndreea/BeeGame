@@ -169,7 +169,7 @@ class BeeGame {
     const healthBar = this.createHealthBar(healthPoints, maxHealth);
     const beeCard = document.createElement("div");
     beeCard.className = "bee-card";
-    beeCard.innerHTML = `<img src="assets/${imageSrc}" alt="${altText}" class="bee-image"> ${healthBar}`;
+    beeCard.innerHTML = `<img src="${imageSrc}" alt="${altText}" class="bee-image"> ${healthBar}`;
     container.appendChild(beeCard);
   }
 
